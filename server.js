@@ -125,8 +125,7 @@ app.get('/api/suggestions', async (req, res) => {
     }
 });
 
-// --- INICIO DEL SERVIDOR ---
-const PORT = 3001;
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor API escuchando en http://localhost:${PORT}`);
-});
+export default app;
+
+
+

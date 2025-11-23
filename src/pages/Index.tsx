@@ -44,10 +44,9 @@ const Index = () => {
   const [selectedTechPart, setSelectedTechPart] = useState<Part | null>(null);
   const [pickingItem, setPickingItem] = useState<Part | null>(null);
 
-  // Referencia para detectar clics fuera del buscador
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- EFECTO: AUTOCOMPLETADO (DEBOUNCE) ---
+  // --- EFECTO: AUTOCOMPLETADO ---
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSuggestions([]);
@@ -55,7 +54,8 @@ const Index = () => {
     }
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/suggestions?q=${searchQuery}`);
+        // CAMBIO AQUÍ: Ruta relativa
+        const response = await fetch(`/api/suggestions?q=${searchQuery}`);
         const data = await response.json();
         setSuggestions(data);
         setShowSuggestions(true);
@@ -89,7 +89,8 @@ const Index = () => {
     setSelectedPart(null);
 
     try {
-        const response = await fetch(`http://localhost:3001/api/search?q=${query}`);
+        // CAMBIO AQUÍ: Ruta relativa
+        const response = await fetch(`/api/search?q=${query}`);
         const data = await response.json();
 
         if (Array.isArray(data) && data.length > 0) {
@@ -113,29 +114,30 @@ const Index = () => {
     handleSearch(suggestion.descripcion);
   };
 
-  // --- 2. SELECCIONAR DETALLE (CON REFRESH DE ALTERNATIVAS) ---
+  // --- 2. SELECCIONAR DETALLE ---
   const selectPart = async (part: Part, currentQuery = searchQuery) => {
     setLoading(true);
     setAlternatives([]);
-    // Actualizamos el input visualmente si venimos de un clic interno
     setSearchQuery(part.descripcion); 
     
     try {
-        const compResponse = await fetch(`http://localhost:3001/api/details/${part.sku}`);
+        // CAMBIO AQUÍ: Ruta relativa
+        const compResponse = await fetch(`/api/details/${part.sku}`);
         const compData = await compResponse.json();
         
         const fullPart = { ...part, compatible_models: compData };
         setSelectedPart(fullPart);
 
         if (part.stock_actual === 0) {
-            const altResponse = await fetch(`http://localhost:3001/api/alternatives/${part.id_grupo}/${part.sku}?q=${currentQuery}`);
+            // CAMBIO AQUÍ: Ruta relativa
+            const altResponse = await fetch(`/api/alternatives/${part.id_grupo}/${part.sku}?q=${currentQuery}`);
             const altData = await altResponse.json();
             setAlternatives(altData);
             
             if (altData.length > 0) {
                 toast.success("Alternativas encontradas");
             } else {
-                toast.info("No hay alternativas directas en este grupo.");
+                toast.info("No hay alternativas directas.");
             }
         }
     } catch (error) {
@@ -155,7 +157,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-secondary/20 pb-20 font-sans text-slate-900">
-      
       {/* HEADER */}
       <header className="bg-white border-b-2 border-primary sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -252,11 +253,11 @@ const Index = () => {
             </div>
         )}
 
-        {/* VISTA SPLIT: DETALLE + ALTERNATIVAS */}
+        {/* DETALLE SELECCIONADO + ALTERNATIVAS */}
         {selectedPart && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
             
-            {/* IZQUIERDA: REPUESTO ELEGIDO */}
+            {/* IZQUIERDA */}
             <div className="lg:col-span-7 space-y-6">
               <div className="flex justify-between items-center">
                  <Button variant="outline" size="sm" onClick={() => setSelectedPart(null)}>← Volver a la lista</Button>
@@ -302,7 +303,7 @@ const Index = () => {
               </div>
             </div>
 
-            {/* DERECHA: ALTERNATIVAS INTELIGENTES */}
+            {/* DERECHA */}
             <div className="lg:col-span-5">
                {selectedPart.stock_actual === 0 && (
                <div className="sticky top-24">
@@ -317,16 +318,8 @@ const Index = () => {
 
                      <div className="p-4 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto bg-slate-50/50">
                         {alternatives.length > 0 ? alternatives.map((alt) => (
-                           <div 
-                                key={alt.sku} 
-                                // AQUI ESTÁ LA MAGIA: CLIC EN TODA LA TARJETA PARA "VER DETALLE"
-                                onClick={() => selectPart(alt)} 
-                                className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-primary transition-all relative group cursor-pointer"
-                           >
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Maximize2 className="h-4 w-4 text-slate-400" />
-                              </div>
-
+                           <div key={alt.sku} onClick={() => selectPart(alt)} className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-primary transition-all relative group cursor-pointer">
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"><Maximize2 className="h-4 w-4 text-slate-400" /></div>
                               <div className="flex justify-between items-start mb-2">
                                  <div>
                                     <h4 className="font-bold text-sm text-slate-800 group-hover:text-primary">{alt.descripcion}</h4>
@@ -340,13 +333,7 @@ const Index = () => {
                                  <div className="text-xs text-slate-500"><MapPin className="h-3 w-3 inline mr-1" />{alt.ubicacion_pasillo}</div>
                                  <span className="font-bold text-lg text-slate-900">${alt.precio}</span>
                               </div>
-                              
-                              {/* BOTÓN SEPARADO PARA NO ACTIVAR EL CLICK DEL PADRE */}
-                              <Button 
-                                className="w-full mt-3 gap-2 bg-slate-900 hover:bg-primary transition-colors relative z-10" 
-                                size="sm" 
-                                onClick={(e) => { e.stopPropagation(); openPickingDrawer(alt); }}
-                              >
+                              <Button className="w-full mt-3 gap-2 bg-slate-900 hover:bg-primary transition-colors relative z-10" size="sm" onClick={(e) => { e.stopPropagation(); openPickingDrawer(alt); }}>
                                  Localizar en Bodega <ArrowRight className="h-3 w-3" />
                               </Button>
                            </div>
@@ -387,7 +374,7 @@ const Index = () => {
         )}
       </main>
 
-      {/* MODALES (Ficha Técnica y Despacho - Sin cambios) */}
+      {/* MODAL FICHA TÉCNICA */}
       {selectedTechPart && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
            <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl border overflow-hidden animate-in zoom-in-95">
@@ -420,6 +407,7 @@ const Index = () => {
         </div>
       )}
 
+      {/* DRAWER DE DESPACHO */}
       {pickingItem && (
          <>
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={() => setPickingItem(null)} />
