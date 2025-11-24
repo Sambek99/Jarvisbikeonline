@@ -45,20 +45,28 @@ const Index = () => {
   const [pickingItem, setPickingItem] = useState<Part | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  
+  // 1. NUEVO REF: Controla si debemos buscar sugerencias o no
+  const shouldFetchSuggestions = useRef(true); 
 
   // --- EFECTO: AUTOCOMPLETADO ---
   useEffect(() => {
+    // Si la bandera es falsa, no hacemos nada (evita que se reabra al seleccionar)
+    if (!shouldFetchSuggestions.current) return;
+
     if (searchQuery.length < 2) {
       setSuggestions([]);
       return;
     }
     const delayDebounceFn = setTimeout(async () => {
       try {
-        // CAMBIO AQUÍ: Ruta relativa
         const response = await fetch(`/api/suggestions?q=${searchQuery}`);
         const data = await response.json();
         setSuggestions(data);
-        setShowSuggestions(true);
+        // Solo mostramos si hay datos Y si la bandera sigue siendo true
+        if (shouldFetchSuggestions.current) {
+            setShowSuggestions(true);
+        }
       } catch (error) {
         console.error("Error fetching suggestions", error);
       }
@@ -79,17 +87,19 @@ const Index = () => {
 
   // --- 1. BUSCAR ---
   const handleSearch = async (term?: string) => {
+    // 2. BLOQUEAR SUGERENCIAS: Al buscar, decimos "No busques más sugerencias ahora"
+    shouldFetchSuggestions.current = false; 
+    setShowSuggestions(false); // Forzamos el cierre inmediato
+
     const query = term || searchQuery;
     if (!query.trim()) return;
 
     setSearchQuery(query);
-    setShowSuggestions(false);
     setLoading(true);
     setSearchResults([]);
     setSelectedPart(null);
 
     try {
-        // CAMBIO AQUÍ: Ruta relativa
         const response = await fetch(`/api/search?q=${query}`);
         const data = await response.json();
 
@@ -110,6 +120,8 @@ const Index = () => {
   };
 
   const handleSelectSuggestion = (suggestion: Suggestion) => {
+    // 3. BLOQUEAR SUGERENCIAS: Al hacer clic en una, bloqueamos el efecto
+    shouldFetchSuggestions.current = false;
     setSearchQuery(suggestion.descripcion);
     handleSearch(suggestion.descripcion);
   };
@@ -118,18 +130,19 @@ const Index = () => {
   const selectPart = async (part: Part, currentQuery = searchQuery) => {
     setLoading(true);
     setAlternatives([]);
+    
+    // También bloqueamos aquí por si acaso actualizamos el query visualmente
+    shouldFetchSuggestions.current = false; 
     setSearchQuery(part.descripcion); 
     
     try {
-        // CAMBIO AQUÍ: Ruta relativa
         const compResponse = await fetch(`/api/details/${part.sku}`);
         const compData = await compResponse.json();
         
         const fullPart = { ...part, compatible_models: compData };
         setSelectedPart(fullPart);
 
-        if (part.stock_actual === 0) {
-            // CAMBIO AQUÍ: Ruta relativa
+        if (part.stock_actual >= 0) {
             const altResponse = await fetch(`/api/alternatives/${part.id_grupo}/${part.sku}?q=${currentQuery}`);
             const altData = await altResponse.json();
             setAlternatives(altData);
@@ -193,7 +206,11 @@ const Index = () => {
                 type="text"
                 placeholder="Ej: Amortiguador, USB, R150..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                    // 4. HABILITAR SUGERENCIAS: Solo cuando el usuario escribe manualmente
+                    shouldFetchSuggestions.current = true;
+                    setSearchQuery(e.target.value);
+                }}
                 onKeyDown={handleKeyPress}
                 onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
                 className="h-14 text-lg border-0 focus-visible:ring-0 rounded-none"
@@ -305,7 +322,7 @@ const Index = () => {
 
             {/* DERECHA */}
             <div className="lg:col-span-5">
-               {selectedPart.stock_actual === 0 && (
+               {selectedPart.stock_actual >= 0 && (
                <div className="sticky top-24">
                   <div className="bg-white rounded-xl border shadow-lg overflow-hidden">
                      <div className="bg-primary px-6 py-4 text-primary-foreground flex justify-between items-center">
