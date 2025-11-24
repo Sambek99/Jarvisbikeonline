@@ -24,13 +24,15 @@ interface Suggestion {
   sku: string;
 }
 
-const recentSearches = ["R150-002107", "Amortiguador", "USB Avatar"];
-
 const Index = () => {
   // --- ESTADOS ---
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   
+  // NUEVO: Estados para Historial y Contador
+  const [dailySearchCount, setDailySearchCount] = useState(12); // Empieza en 12
+  const [recentSearches, setRecentSearches] = useState<string[]>(["R150-002107", "Amortiguador", "USB Avatar"]);
+
   // Estados de Autocompletado
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -45,13 +47,10 @@ const Index = () => {
   const [pickingItem, setPickingItem] = useState<Part | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  
-  // 1. NUEVO REF: Controla si debemos buscar sugerencias o no
   const shouldFetchSuggestions = useRef(true); 
 
   // --- EFECTO: AUTOCOMPLETADO ---
   useEffect(() => {
-    // Si la bandera es falsa, no hacemos nada (evita que se reabra al seleccionar)
     if (!shouldFetchSuggestions.current) return;
 
     if (searchQuery.length < 2) {
@@ -63,7 +62,6 @@ const Index = () => {
         const response = await fetch(`/api/suggestions?q=${searchQuery}`);
         const data = await response.json();
         setSuggestions(data);
-        // Solo mostramos si hay datos Y si la bandera sigue siendo true
         if (shouldFetchSuggestions.current) {
             setShowSuggestions(true);
         }
@@ -87,9 +85,8 @@ const Index = () => {
 
   // --- 1. BUSCAR ---
   const handleSearch = async (term?: string) => {
-    // 2. BLOQUEAR SUGERENCIAS: Al buscar, decimos "No busques más sugerencias ahora"
     shouldFetchSuggestions.current = false; 
-    setShowSuggestions(false); // Forzamos el cierre inmediato
+    setShowSuggestions(false);
 
     const query = term || searchQuery;
     if (!query.trim()) return;
@@ -98,6 +95,17 @@ const Index = () => {
     setLoading(true);
     setSearchResults([]);
     setSelectedPart(null);
+
+    // NUEVO: Actualizar Contadores e Historial
+    // 1. Aumentamos el contador de hoy
+    setDailySearchCount(prev => prev + 1);
+
+    // 2. Actualizamos el historial (Lógica de Pila: Último entra primero)
+    setRecentSearches(prev => {
+        // Filtramos si ya existe para no duplicar y tomamos los últimos 2 para sumar el nuevo
+        const newHistory = [query, ...prev.filter(item => item !== query)].slice(0, 3);
+        return newHistory;
+    });
 
     try {
         const response = await fetch(`/api/search?q=${query}`);
@@ -120,7 +128,6 @@ const Index = () => {
   };
 
   const handleSelectSuggestion = (suggestion: Suggestion) => {
-    // 3. BLOQUEAR SUGERENCIAS: Al hacer clic en una, bloqueamos el efecto
     shouldFetchSuggestions.current = false;
     setSearchQuery(suggestion.descripcion);
     handleSearch(suggestion.descripcion);
@@ -130,8 +137,6 @@ const Index = () => {
   const selectPart = async (part: Part, currentQuery = searchQuery) => {
     setLoading(true);
     setAlternatives([]);
-    
-    // También bloqueamos aquí por si acaso actualizamos el query visualmente
     shouldFetchSuggestions.current = false; 
     setSearchQuery(part.descripcion); 
     
@@ -166,7 +171,13 @@ const Index = () => {
   const closeTechModal = () => setSelectedTechPart(null);
   const openPickingDrawer = (part: Part) => setPickingItem(part);
   const confirmPicking = () => { toast.success("Ítem confirmado para despacho."); setPickingItem(null); };
-  const resetSearch = () => { setSearchResults([]); setSelectedPart(null); setSearchQuery(""); };
+  
+  // NUEVO: Reset Search mantiene el historial
+  const resetSearch = () => { 
+      setSearchResults([]); 
+      setSelectedPart(null); 
+      setSearchQuery(""); 
+  };
 
   return (
     <div className="min-h-screen bg-secondary/20 pb-20 font-sans text-slate-900">
@@ -207,7 +218,6 @@ const Index = () => {
                 placeholder="Ej: Amortiguador, USB, R150..."
                 value={searchQuery}
                 onChange={(e) => {
-                    // 4. HABILITAR SUGERENCIAS: Solo cuando el usuario escribe manualmente
                     shouldFetchSuggestions.current = true;
                     setSearchQuery(e.target.value);
                 }}
@@ -374,11 +384,13 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatsCard title="Total Referencias" value="3,319" icon={Package} />
               <StatsCard title="Motos Soportadas" value="34" icon={AlertTriangle} />
-              <StatsCard title="Búsquedas Hoy" value="12" icon={Clock} />
+              {/* NUEVO: Pasamos la variable de estado dailySearchCount */}
+              <StatsCard title="Búsquedas Hoy" value={dailySearchCount} icon={Clock} />
             </div>
             <div className="bg-white rounded-xl border p-6 shadow-sm">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Clock className="h-5 w-5 text-slate-400" /> Búsquedas Recientes</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* NUEVO: Mapeamos el estado recentSearches */}
                 {recentSearches.map((term, index) => (
                   <button key={index} onClick={() => handleSearch(term)} className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border transition-colors group text-left">
                     <span className="font-medium">{term}</span>
