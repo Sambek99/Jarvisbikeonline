@@ -191,7 +191,7 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-4">
                <div className="hidden md:block text-right">
-                  <p className="text-sm font-bold">Bodega Central</p>
+                  <p className="text-sm font-bold">Bodega Principal Percha 3</p>
                   <p className="text-xs text-muted-foreground">Sistema Online</p>
                </div>
                <div className="h-10 w-10 rounded-full bg-slate-100 border flex items-center justify-center text-primary"><User className="h-5 w-5" /></div>
