@@ -464,7 +464,7 @@ const Index = () => {
                   </div>
                </div>
                <div className="p-6 border-t bg-slate-50">
-                   <Button className="w-full h-14 text-lg font-bold gap-2 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-900/20" onClick={confirmPicking}>
+                   <Button className="w-full h-14 hidden text-lg font-bold gap-2 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-900/20" onClick={confirmPicking}>
                        <CheckCircle className="h-6 w-6" /> CONFIRMAR DESPACHO
                    </Button>
                </div>
