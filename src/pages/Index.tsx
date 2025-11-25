@@ -299,7 +299,7 @@ const Index = () => {
                       <p className="text-sm text-slate-500">Marca: {selectedPart.marca}</p>
                     </div>
                     <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${selectedPart.stock_actual === 0 ? 'bg-red-50 text-destructive border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                      {selectedPart.stock_actual === 0 ? <><XCircle className="h-3 w-3" /> AGOTADO</> : <><CheckCircle className="h-3 w-3" /> EN STOCK</>}
+                      {selectedPart.stock_actual === 0 ? <><XCircle className="h-3 w-3" /> AGOTADO</> : <><CheckCircle className="h-3 w-3" /> EN STOCK {selectedPart.stock_actual}</>}
                     </div>
                   </div>
 
