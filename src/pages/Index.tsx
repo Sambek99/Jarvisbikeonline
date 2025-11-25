@@ -450,6 +450,7 @@ const Index = () => {
                      <p className="text-sm text-slate-500 mb-1">Ítem a recoger:</p>
                      <p className="font-bold text-lg leading-tight">{pickingItem.descripcion}</p>
                      <p className="font-mono text-sm text-slate-400 mt-1">{pickingItem.sku}</p>
+                     <p className="font-mono text-sm text-slate-400 mt-1">Stock: {pickingItem.stock}</p>
                   </div>
                   <div className="space-y-6">
                     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded text-yellow-900 flex items-center gap-4 shadow-sm">
