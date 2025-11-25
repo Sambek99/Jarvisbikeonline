@@ -456,7 +456,7 @@ const Index = () => {
                             <MapPin className="h-8 w-8 text-yellow-600" />
                             <div><p className="text-xs font-bold uppercase text-yellow-600">Ubicación Física</p><p className="text-3xl font-bold">{pickingItem.ubicacion_pasillo}</p></div>
                     </div>
-                    <div>
+                    <div className="hidden">
                         <label className="block text-sm font-medium text-slate-700 mb-2">Cantidad a despachar</label>
                         <Input type="number" defaultValue="1" min="1" max={pickingItem.stock_actual} className="text-lg h-12 font-bold" />
                         <p className="text-xs text-slate-500 mt-2">Disponible: {pickingItem.stock_actual}</p>
