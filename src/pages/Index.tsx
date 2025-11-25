@@ -454,7 +454,7 @@ const Index = () => {
                   <div className="space-y-6">
                     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded text-yellow-900 flex items-center gap-4 shadow-sm">
                             <MapPin className="h-8 w-8 text-yellow-600" />
-                            <div><p className="text-xs font-bold uppercase text-yellow-600">Ubicación Física</p><p className="text-3xl font-bold">{pickingItem.ubicacion_pasillo}</p></div>
+                            <div><p className="text-xs font-bold uppercase text-yellow-600">Ubicación Física</p><p className="text-3xl font-bold">Bodega Principal Percha 3</p></div>
                     </div>
                     <div className="hidden">
                         <label className="block text-sm font-medium text-slate-700 mb-2">Cantidad a despachar</label>
